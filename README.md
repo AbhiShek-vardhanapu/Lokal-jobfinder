@@ -15,16 +15,16 @@ The app is designed with a professional UI, optimized performance, and a focus o
 ## App Screenshots
 
 ### Jobs Tab
-![Jobs Tab Screenshot](./assets/screenshots/jobs-tab.png)
+![Jobs Tab Screenshot](/screenshots/jobs-tab.png)
 
 ### Bookmarks Tab 
-![Bookmarks Tab Screenshot](./assets/screenshots/bookmarks-tab.png)
+![Bookmarks Tab Screenshot](screenshots/bookmarks-tab.png)
 
 ### Job Details
-![Job Details Screenshot](./assets/screenshots/job-details.png)
+![Job Details Screenshot](screenshots/job-details.png)
 
 ### Navigation Bar
-![Navigation Bar Screenshot](./assets/screenshots/navigation-bar.png)
+![Navigation Bar Screenshot](screenshots/navigation-bar.png)
 
 ## Features
 
