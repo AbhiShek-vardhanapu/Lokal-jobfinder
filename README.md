@@ -12,6 +12,20 @@ Lokal JobFinder is a job search app that allows users to:
 
 The app is designed with a professional UI, optimized performance, and a focus on user experience. It leverages modern React Native practices, TypeScript for type safety, and Expo for streamlined development and deployment.
 
+## App Screenshots
+
+### Jobs Tab
+![Jobs Tab Screenshot](./assets/screenshots/jobs-tab.png)
+
+### Bookmarks Tab 
+![Bookmarks Tab Screenshot](./assets/screenshots/bookmarks-tab.png)
+
+### Job Details
+![Job Details Screenshot](./assets/screenshots/job-details.png)
+
+### Navigation Bar
+![Navigation Bar Screenshot](./assets/screenshots/navigation-bar.png)
+
 ## Features
 
 ### Core Features (Assignment Requirements)
