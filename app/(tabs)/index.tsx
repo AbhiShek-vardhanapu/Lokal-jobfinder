@@ -1,74 +1,159 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  FlatList,
+  View,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  RefreshControl,
+  Button,
+} from 'react-native';
+import JobCard from '../../components/JobCard';
+import { fetchJobs } from '../../utils/api';
+import { useBookmarks } from '../../hooks/useBookmarks';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const PAGE_SIZE = 10;
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+const JobBoardScreen = () => {
+  const [jobs, setJobs] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+
+  const fetchJobData = useCallback(async (currentPage) => {
+    try {
+      const newJobs = await fetchJobs(currentPage, PAGE_SIZE);
+      if (newJobs.length === 0 || newJobs.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+      return newJobs;
+    } catch (err) {
+      setError(err.message || 'Failed to load jobs');
+      throw err;
+    }
+  }, []);
+
+  const loadJobs = useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const newJobs = await fetchJobData(page);
+      setJobs((prevJobs) => [...prevJobs, ...newJobs]);
+      setPage((prevPage) => prevPage + 1);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, loading, hasMore, fetchJobData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
+    try {
+      const newJobs = await fetchJobData(1);
+      setJobs(newJobs);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchJobData]);
+
+  useEffect(() => {
+    loadJobs();
+  }, []);
+
+  const handleEndReached = useCallback(() => {
+    if (!loading && hasMore) {
+      loadJobs();
+    }
+  }, [loading, hasMore, loadJobs]);
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button
+          title="Retry"
+          onPress={() => {
+            setError(null);
+            loadJobs();
+          }}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.heading}>Latest Opportunities</Text>
+      <FlatList
+        data={jobs}
+        keyExtractor={(item, index) => `job-${item.id}-${index}`}
+        renderItem={({ item }) => (
+          <JobCard
+            job={item}
+            isBookmarked={isBookmarked(item.id)}
+            onBookmark={() => toggleBookmark(item)}
+          />
+        )}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading && hasMore ? (
+            <ActivityIndicator
+              size="large"
+              color="#1A1A2E"
+              style={styles.loader}
+            />
+          ) : null
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#1A1A2E']}
+            tintColor="#1A1A2E"
+          />
+        }
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1A1A2E',
+    margin: 16,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  errorText: {
+    color: '#E94560',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
+
+export default JobBoardScreen;
